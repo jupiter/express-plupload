@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
+<title>Plupload</title>
+
+<script type="text/javascript" src="//code.jquery.com/jquery-1.9.1.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+<link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css">
+<script src="http://rawgithub.com/moxiecode/plupload/master/js/plupload.full.min.js"></script>
+<script src="http://rawgithub.com/moxiecode/plupload/master/js/jquery.plupload.queue/jquery.plupload.queue.min.js"></script>
+<link rel="stylesheet" type="text/css" href="http://rawgithub.com/moxiecode/plupload/master/js/jquery.plupload.queue/css/jquery.plupload.queue.css"/>
+
+</head>
+<body>
+<form method="post" action="/echo/json">
+  <div id="uploader">
+    <p>Your browser doesn't have Flash, Silverlight or HTML5 support.</p>
+  </div>
+  <input type="submit" value="Send" />
+</form>
+<script>
+  $(document).ready(function() {
+    // Setup html5 version
+    $("#uploader").pluploadQueue({
+      // General settings
+      runtimes : 'html5,flash,silverlight,html4',
+
+      // Fake server response here
+      // url : '../upload.php',
+      url: "/upload",
+
+      chunk_size: '500kb',
+      max_file_size : '10mb',
+      rename : true,
+      dragdrop: true,
+      filters : [
+        {title : "Image files", extensions : "jpg,gif,png"},
+        {title : "Zip files", extensions : "zip"}
+      ],
+
+      // Resize images on clientside if we can
+      // resize : {width : 320, height : 240, quality : 90},
+
+      flash_swf_url : 'http://rawgithub.com/moxiecode/moxie/master/bin/flash/Moxie.cdn.swf',
+      silverlight_xap_url : 'http://rawgithub.com/moxiecode/moxie/master/bin/silverlight/Moxie.cdn.xap'
+    });
+  });
+</script>
+</body>
+</html>

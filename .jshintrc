@@ -1,0 +1,26 @@
+{
+  "expr": true,
+  "camelcase": true,
+  "curly": false,
+  "eqeqeq": true,
+  "freeze": true,
+  "indent": 2,
+  "newcap": true,
+  "quotmark": "single",
+  "maxdepth": 3,
+  "maxstatements": 15,
+  "maxlen": 120,
+  "eqnull": true,
+  "funcscope": true,
+  "unused": "vars",
+  "strict": false,
+  "predef": [
+      "before",
+      "after",
+      "it",
+      "describe",
+      "beforeEach",
+      "afterEach"
+  ],
+  "node": true
+}
