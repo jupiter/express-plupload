@@ -32,8 +32,11 @@ exports.middleware = function(req, res, next) {
 
     var uploadId = id(req, attrs);
     var upload = uploads[uploadId];
-
-    if (!upload) {
+    // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'begin');
+    if (attrs.chunk === 0) {
+      if (upload && upload.stream) {
+        upload.stream.destroy();
+      }
       upload = uploads[uploadId] = {
         filename: attrs.name,
         totalChunks: attrs.chunks,
@@ -41,43 +44,43 @@ exports.middleware = function(req, res, next) {
         completedChunks: 0,
         completedOffset: 0
       };
-    }
-
-    if (upload.nextChunk !== attrs.chunk) {
-      return next(new Error('out_of_order'));
+    } else if (!upload || attrs.chunk !== upload.nextChunk) {
+      return next(new Error('expecting chunk ' + (upload && upload.nextChunk || 0) + ' got ' + attrs.chunk));
     }
 
     // Increment next chunk
     upload.nextChunk = attrs.chunk + 1;
 
-    function onReadEnd(readable) {
-      if (file !== readable) return;
+    file.on('unpipe', function(readable) {
       if (timeout) clearTimeout(timeout);
       upload.completedChunks = attrs.chunk;
       upload.completedOffset += upload.stream.currentBytes;
-      upload.stream.removeListener('readEnd', onReadEnd);
-    }
+    });
 
     // Continue with existing stream
     if (upload.stream) {
-      upload.stream.append(file).on('readEnd', onReadEnd);
+      upload.stream.append(file);
+
+      if (upload.nextChunk === upload.totalChunks) {
+        upload.stream.append(null);
+      }
       status = 201;
       return;
     }
 
     function onError() {
+      if (!upload) return;
       upload.nextChunk = upload.completedChunks + 1;
       upload.stream = null;
     }
 
-    file.on('data', function() {
-      if (timeout) clearTimeout(timeout);
-      timeout = setTimeout(onError, 2000);
-    });
-
     // Start a new stream
     upload.stream = new QueuedStream();
     upload.stream
+    .on('data', function() {
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(onError, 3000);
+    })
     .on('error', function() {
       if (timeout) clearTimeout(timeout);
       onError();
@@ -85,13 +88,17 @@ exports.middleware = function(req, res, next) {
     .on('end', function() {
       if (timeout) clearTimeout(timeout);
     })
-    .on('readEnd', onReadEnd)
     .append(file);
+
+    if (upload.nextChunk === upload.totalChunks) {
+      upload.stream.append(null);
+    }
 
     req.plupload = upload;
     next();
   });
   busboy.on('finish', function() {
+    // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'finish');
     if (status) {
       res.send(status);
     }

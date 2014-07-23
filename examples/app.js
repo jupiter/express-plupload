@@ -1,7 +1,7 @@
 var path = require('path');
 var fs = require('fs');
 var express = require('express');
-var app = express();
+var app = module.exports = express();
 var pluploadMiddleware = require('../index.js').middleware;
 
 app.use('/upload', pluploadMiddleware);
