@@ -18,7 +18,6 @@ exports.middleware = function(req, res, next) {
   if (!contentType || !~contentType.indexOf('multipart/form-data')) return next();
 
   var attrs = {};
-  var status;
   var timeout;
 
   var busboy = new Busboy({ headers: req.headers });
@@ -31,13 +30,15 @@ exports.middleware = function(req, res, next) {
     attrs.chunks = parseInt(attrs.chunks, 10);
 
     var uploadId = id(req, attrs);
-    var upload = uploads[uploadId];
+    var upload = req.plupload = uploads[uploadId];
+
     // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'begin');
     if (attrs.chunk === 0) {
       if (upload && upload.stream) {
         upload.stream.destroy();
       }
-      upload = uploads[uploadId] = {
+      upload = req.plupload = uploads[uploadId] = {
+        isNew: true,
         filename: attrs.name,
         totalChunks: attrs.chunks,
         nextChunk: 0, // chunk that can be added to the queue
@@ -59,13 +60,12 @@ exports.middleware = function(req, res, next) {
 
     // Continue with existing stream
     if (upload.stream) {
+      upload.isNew = false;
       upload.stream.append(file);
-
       if (upload.nextChunk === upload.totalChunks) {
         upload.stream.append(null);
       }
-      status = 201;
-      return;// cb();
+      return next();
     }
 
     function cleanUp() {
@@ -100,15 +100,10 @@ exports.middleware = function(req, res, next) {
     if (upload.nextChunk === upload.totalChunks) {
       upload.stream.append(null);
     }
-
-    req.plupload = upload;
     next();
   });
   busboy.on('finish', function() {
     // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'finish');
-    if (status) {
-      res.send(status);
-    }
   });
   req.pipe(busboy);
 };

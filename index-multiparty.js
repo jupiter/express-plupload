@@ -41,13 +41,14 @@ exports.middleware = function(req, res, next) {
     attrs.chunks = parseInt(attrs.chunks, 10);
 
     var uploadId = id(req, attrs);
-    var upload = uploads[uploadId];
+    var upload = req.plupload = uploads[uploadId];
     // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'begin');
     if (attrs.chunk === 0) {
       if (upload && upload.stream) {
         upload.stream.destroy();
       }
-      upload = uploads[uploadId] = {
+      upload = req.plupload = uploads[uploadId] = {
+        isNew: true,
         filename: attrs.name,
         totalChunks: attrs.chunks,
         nextChunk: 0, // chunk that can be added to the queue
@@ -69,13 +70,12 @@ exports.middleware = function(req, res, next) {
 
     // Continue with existing stream
     if (upload.stream) {
+      upload.isNew = false;
       upload.stream.append(file);
-
       if (upload.nextChunk === upload.totalChunks) {
         upload.stream.append(null);
       }
-      status = 201;
-      return;
+      return next();
     }
 
     function cleanUp() {
@@ -114,11 +114,11 @@ exports.middleware = function(req, res, next) {
     req.plupload = upload;
     next();
   });
+  form.on('error', function(err){
+    console.log(err, req.plupload);
+  });
   form.on('finish', function() {
     // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'finish');
-    if (status) {
-      res.send(status);
-    }
   });
   form.parse(req);
 };

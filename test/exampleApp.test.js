@@ -168,7 +168,7 @@ describe('when example app', function() {
           // proxy: 'http://localhost:5389'
         }, next);
         form.append(r.form(), chunkOptions);
-      }, delayedFn(750, function(err){
+      }, delayedFn(100, function(err){
         if (err) return done(err);
 
         assert.ok(fs.statSync(self.uploadedFilePath));
