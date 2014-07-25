@@ -78,10 +78,16 @@ exports.middleware = function(req, res, next) {
       return;
     }
 
+    function cleanUp() {
+      if (!uploads[uploadId] || upload.stream) return;
+      delete(uploads[uploadId]);
+    }
+
     function onError() {
       if (!upload) return;
       upload.nextChunk = upload.completedChunks + 1;
       upload.stream = null;
+      timeout = setTimeout(cleanUp, 30000);
     }
 
     // Start a new stream
@@ -97,6 +103,7 @@ exports.middleware = function(req, res, next) {
     })
     .on('end', function() {
       if (timeout) clearTimeout(timeout);
+      cleanUp();
     })
     .append(file);
 

@@ -1,7 +1,6 @@
 var crypto = require('crypto');
 var Busboy = require('busboy');
 var QueuedStream = require('queued-stream');
-var synchd = require('synchronized');
 
 var uploads = {};
 
@@ -69,11 +68,16 @@ exports.middleware = function(req, res, next) {
       return;// cb();
     }
 
+    function cleanUp() {
+      if (!uploads[uploadId] || upload.stream) return;
+      delete(uploads[uploadId]);
+    }
+
     function onError() {
       if (!upload) return;
       upload.nextChunk = upload.completedChunks + 1;
       upload.stream = null;
-
+      timeout = setTimeout(cleanUp, 30000);
     }
 
     // Start a new stream
@@ -83,12 +87,13 @@ exports.middleware = function(req, res, next) {
       if (timeout) clearTimeout(timeout);
       timeout = setTimeout(onError, 3000);
     })
-    .on('error', function() {
+    .on('error', function(err) {
       if (timeout) clearTimeout(timeout);
       onError();
     })
     .on('end', function() {
       if (timeout) clearTimeout(timeout);
+      cleanUp();
     })
     .append(file);
 
