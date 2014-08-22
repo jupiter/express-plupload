@@ -25,25 +25,25 @@ exports.middleware = function(req, res, next) {
     attrs[fieldname] = val;
   });
   busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
-    attrs.filename = filename;
     attrs.chunk = parseInt(attrs.chunk, 10);
     attrs.chunks = parseInt(attrs.chunks, 10);
 
     var uploadId = id(req, attrs);
     var upload = req.plupload = uploads[uploadId];
 
-    // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'begin');
+    // console.log(filename, attrs.chunk, attrs.chunks, 'begin');
     if (attrs.chunk === 0) {
       if (upload && upload.stream) {
         upload.stream.destroy();
       }
       upload = req.plupload = uploads[uploadId] = {
         isNew: true,
-        filename: attrs.name,
+        filename: filename,
         totalChunks: attrs.chunks,
         nextChunk: 0, // chunk that can be added to the queue
         completedChunks: 0,
-        completedOffset: 0
+        completedOffset: 0,
+        fields: attrs
       };
     } else if (!upload || attrs.chunk !== upload.nextChunk) {
       return next(new Error('expecting chunk ' + (upload && upload.nextChunk || 0) + ' got ' + attrs.chunk));
@@ -103,7 +103,7 @@ exports.middleware = function(req, res, next) {
     next();
   });
   busboy.on('finish', function() {
-    // console.log(attrs.filename, attrs.chunk, attrs.chunks, 'finish');
+    // console.log(filename, attrs.chunk, attrs.chunks, 'finish');
   });
   req.pipe(busboy);
 };

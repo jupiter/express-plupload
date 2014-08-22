@@ -19,7 +19,6 @@ exports.middleware = function(req, res, next) {
   if (!contentType || !~contentType.indexOf('multipart/form-data')) return next();
 
   var attrs = {};
-  var status;
   var timeout;
 
   var form = new multiparty.Form();
@@ -35,7 +34,6 @@ exports.middleware = function(req, res, next) {
 
     var file = part;
 
-    attrs.filename = part.filename;
     attrs.name = attrs.name.toString();
     attrs.chunk = parseInt(attrs.chunk, 10);
     attrs.chunks = parseInt(attrs.chunks, 10);
@@ -49,11 +47,12 @@ exports.middleware = function(req, res, next) {
       }
       upload = req.plupload = uploads[uploadId] = {
         isNew: true,
-        filename: attrs.name,
+        filename: part.filename,
         totalChunks: attrs.chunks,
         nextChunk: 0, // chunk that can be added to the queue
         completedChunks: 0,
-        completedOffset: 0
+        completedOffset: 0,
+        fields: attrs
       };
     } else if (!upload || attrs.chunk !== upload.nextChunk) {
       return next(new Error('expecting chunk ' + (upload && upload.nextChunk || 0) + ' got ' + attrs.chunk));
