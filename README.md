@@ -7,11 +7,7 @@ Note: this will only work where incoming requests for different PLUpload chunks 
 
 ## To install
 
-*TODO: Needs to be published to npm for `npm install express-plupload`*
-
-Add to your package.json dependencies:
-
-`"express-plupload": "git+ssh://git@git.adstream.com:opensource/express-plupload.git"`
+`npm install express-plupload`*
 
 ## How to use
 
