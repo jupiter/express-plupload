@@ -6,7 +6,7 @@ var request = require('request');
 var createRandomFile = require('./support/createRandomFile');
 var md5 = require('./support/md5');
 var form = require('./support/form');
-// var app = require('../examples/app'); // For now, you have to have this running separately
+var app = require('../examples/app'); // For dev, run this separately for absolute certainty
 
 function uploadChunked(filePath, n) {
   var req = request({
